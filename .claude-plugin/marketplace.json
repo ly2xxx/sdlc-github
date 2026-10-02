@@ -1,0 +1,12 @@
+{
+  "name": "ly2xxx",
+  "description": "Claude plugins by ly2xxx",
+  "owner": { "name": "ly2xxx", "url": "https://github.com/ly2xxx" },
+  "plugins": [
+    {
+      "name": "sdlc-github",
+      "source": "./",
+      "description": "Drive a feature from a one-line idea to a reviewed pull request through the SDLC Pipeline on GitHub Actions."
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "name": "sdlc-github",
+  "displayName": "SDLC GitHub",
+  "description": "Take a feature from a one-line idea to a reviewed pull request through the SDLC Pipeline on GitHub Actions: Ollama designs it, Claude builds it phase by phase, and deterministic checks decide when it is done.",
+  "author": { "name": "ly2xxx", "url": "https://github.com/ly2xxx" },
+  "homepage": "https://github.com/ly2xxx/sdlc-github",
+  "repository": "https://github.com/ly2xxx/sdlc-github",
+  "license": "PolyForm-Noncommercial-1.0.0",
+  "keywords": ["sdlc", "github-actions", "pull-request", "ollama", "spec-driven"]
+}
