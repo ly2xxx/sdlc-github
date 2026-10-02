@@ -24,8 +24,9 @@ opening one.
 ## Publishing notes (for future reference)
 
 1. **Your own marketplace.** No review, works right away. You make a public GitHub repo with
-   three files: `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json` and
-   `skills/sdlc-github/SKILL.md`. People add it from **Customize > Plugins > Add > Add
+   three files: `.claude-plugin/marketplace.json`, and the plugin in its own folder,
+   `plugins/sdlc-github/.claude-plugin/plugin.json` and
+   `plugins/sdlc-github/skills/sdlc-github/SKILL.md`. People add it from **Customize > Plugins > Add > Add
    marketplace**, or with `claude plugin marketplace add ly2xxx/<repo>` in Claude Code. It needs
    to be its own repo, since you didn't want the skill anywhere in `.github`.
 2. **Anthropic's directory.** That's the "Anthropic Directory" stuff in your screenshot. You

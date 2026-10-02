@@ -5,7 +5,7 @@
   "plugins": [
     {
       "name": "sdlc-github",
-      "source": "./",
+      "source": "./plugins/sdlc-github",
       "description": "Drive a feature from a one-line idea to a reviewed pull request through the SDLC Pipeline on GitHub Actions."
     }
   ]
