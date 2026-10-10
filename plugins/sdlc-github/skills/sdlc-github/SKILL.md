@@ -1,6 +1,6 @@
 ---
 name: sdlc-github
-description: Take a feature from a one-line idea to a reviewed pull request through the SDLC Pipeline on GitHub Actions. Join a run someone started with Run workflow, or start one with an sdlc issue; let Ollama write intent, spec and plan; build the frozen plan phase by phase (one phase branch and pull request each, Phase check, merge); hand back so the same run verifies, reviews and opens the pull request; then report it. Use for "sdlc-github" followed by an idea, "build this idea through the pipeline", "build feature 003", or to continue, re-plan or re-verify an existing sdlc feature.
+description: Take a feature from a one-line idea to a reviewed pull request through the SDLC Pipeline on GitHub Actions. Set up a new repository for it, join a run someone started with Run workflow, or start one with an sdlc issue; let Ollama write intent, spec and plan; build the frozen plan phase by phase (one phase branch and pull request each, Phase check, merge); hand back so the same run verifies, reviews and opens the pull request; then report it. Use for "sdlc-github" followed by an idea, "build this idea through the pipeline", "build feature 003", or to continue, re-plan or re-verify an existing sdlc feature, or "set up sdlc-github in this repo".
 ---
 
 # SDLC GitHub
@@ -28,11 +28,35 @@ you, during step 4: phase/<f>/<n> → PR into feature/<f> → SDLC Phase Check �
 - The pipeline doesn't need you. Anyone can run it by hand with Run workflow.
   This skill does the Claude Code parts: starting a run on request, building,
   and seeing it through.
-- The repo needs these: `sdlc.yml` (an `issues: [labeled]` trigger and an `sdlc`
-  label, if you start the runs) and `sdlc-phase.yml` on `pull_request` into
-  `feature/**`. It also needs an `OLLAMA_API_KEY` secret, and "Allow GitHub
-  Actions to create and approve pull requests" turned on. If one is missing,
-  say which, and stop.
+- The repo needs the two caller workflows, `.github/workflows/sdlc.yml` and
+  `sdlc-phase.yml`, on its default branch, an `sdlc` label and an
+  `OLLAMA_API_KEY` secret. If the workflows are missing, set the repository up
+  (step 0). Only the user can add the secret.
+
+## 0. Set up a new repository
+
+Do this once, when the default branch has no `.github/workflows/sdlc.yml`.
+
+1. Copy `templates/sdlc.yml` and `templates/sdlc-phase.yml` from this skill's base
+   directory into the repository's `.github/workflows/`. Change only `test-command`,
+   in both files, to the repository's whole test suite: keep `python -m pytest -q`
+   for Python or an empty repository (its first plan adds the tests), and use the
+   repository's own command, such as `npm test`, for Node.js. A Node.js repository's
+   `.gitignore` must list `node_modules/`; add it if it doesn't, or the local check in
+   step 4 counts every installed package as outside the plan.
+2. Commit both as `sdlc: add the SDLC Pipeline` to the default branch, because Run
+   workflow and the issue trigger only use workflows that are on it. Push straight to
+   it when the user says so; otherwise open a pull request and ask them to merge it.
+   An empty repository gets them as its first commit.
+3. Create the `sdlc` label if it's missing (GitHub MCP tools, or
+   `gh api repos/<owner>/<repo>/labels -f name=sdlc -f color=5319e7`).
+4. Ask the user to add the `OLLAMA_API_KEY` secret (Settings → Secrets and variables
+   → Actions), and wait until they say it's done. Two optional settings are theirs too:
+   "Allow GitHub Actions to create and approve pull requests", without which step 6
+   prints the pull request for you to open (step 5), and required reviewers on the
+   `sdlc-review` environment, to pause the run at each ✋ job.
+
+Then start the run (step 1).
 
 ## 1. Join or start the run
 
@@ -70,14 +94,19 @@ creates no tag, so go to step 5.
 ## 3. Set up once
 
 ```bash
-uv venv .venv && . .venv/bin/activate && uv pip install -r requirements.txt pytest
 # the pipeline at the version this repo's workflows call (main, v1, ...)
 ref=$(sed -n 's#.*ly2xxx/\.github/\.github/workflows/sdlc\.yml@\([^ ]*\).*#\1#p' .github/workflows/sdlc.yml | head -1)
 test -d ../.github/actions/sdlc-stage || git clone -q --depth 1 --branch "${ref:-main}" https://github.com/ly2xxx/.github ../.github
-CHECK="python ../.github/actions/sdlc-stage/sdlc_stage.py verify --test-command 'python -m pytest -q'"
+python3 ../.github/actions/sdlc-stage/sdlc_stage.py toolchain   # e.g. "Toolchain: Python. Install: uv pip install -e .."
+TEST=$(sed -n 's/^ *test-command: *//p' .github/workflows/sdlc.yml | head -1)
+CHECK="python3 ../.github/actions/sdlc-stage/sdlc_stage.py verify --test-command '${TEST:-python -m pytest -q}'"
 ```
 
-Use `pyproject.toml` (`uv pip install -e . pytest`) when the repo has one.
+Install the project the way `toolchain` prints, as verification will: for Python,
+`uv venv .venv && . .venv/bin/activate`, then its install command (if any) and
+`uv pip install pytest`; for Node.js, its install command. A pipeline version without
+`toolchain` installs Python only: `uv pip install -e .` with a `pyproject.toml`, else
+`uv pip install -r requirements.txt`, plus pytest.
 
 ## 4. Build each phase, in order
 

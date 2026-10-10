@@ -23,15 +23,20 @@ This repository is its own marketplace, `ly2xxx`.
 
 ## Use
 
-In a session on a repository that calls the pipeline, say what to build:
+In a session on a repository, say what to build:
 
 > use sdlc-github to build a version endpoint on the FastAPI app
 
 or join a feature that is already under way: "build feature 003", "re-verify feature 003".
 
-The repository needs the pipeline's two caller workflows, an `OLLAMA_API_KEY` secret, an `sdlc`
-label, and "Allow GitHub Actions to create and approve pull requests". The
-[pipeline's README](https://github.com/ly2xxx/.github#use-it) shows the setup.
+**A new repository** is set up first, on request ("set up sdlc-github in this repo") or when
+the skill finds no pipeline. It adds the two caller workflows,
+[`sdlc.yml` and `sdlc-phase.yml`](plugins/sdlc-github/skills/sdlc-github/templates), to the
+default branch and creates the `sdlc` label. You add one secret, `OLLAMA_API_KEY`, under
+Settings > Secrets and variables > Actions. Two settings are optional: "Allow GitHub Actions to
+create and approve pull requests" lets the pipeline open its pull request itself, and required
+reviewers on the `sdlc-review` environment pause the run for your approval at each review step.
+The [pipeline's README](https://github.com/ly2xxx/.github#use-it) has the details.
 
 ## What it runs
 
@@ -41,6 +46,7 @@ Claude:
 - clones `ly2xxx/.github` at the version your workflows call, and runs its `sdlc_stage.py
   verify` on your machine, along with each phase's Verify commands from the approved plan and
   your test suite;
+- in a new repository, commits the two caller workflows and creates the `sdlc` label;
 - pushes `phase/<feature>/<n>` branches, opens and merges pull requests into
   `feature/<feature>`, and opens `sdlc` issues to start pipeline runs;
 - reads workflow runs and their logs.
