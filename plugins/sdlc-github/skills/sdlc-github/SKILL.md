@@ -50,8 +50,9 @@ Do this once, when the default branch has no `.github/workflows/sdlc.yml`.
    An empty repository gets them as its first commit.
 3. Create the `sdlc` label if it's missing (GitHub MCP tools, or
    `gh api repos/<owner>/<repo>/labels -f name=sdlc -f color=5319e7`).
-4. Ask the user to add the `OLLAMA_API_KEY` secret (Settings → Secrets and variables
-   → Actions), and wait until they say it's done. Two optional settings are theirs too:
+4. Ask the user to create an API key at https://ollama.com/settings/keys and add it as
+   the `OLLAMA_API_KEY` secret (Settings → Secrets and variables → Actions → New
+   repository secret), and wait until they say it's done. Two optional settings are theirs too:
    "Allow GitHub Actions to create and approve pull requests", without which step 6
    prints the pull request for you to open (step 5), and required reviewers on the
    `sdlc-review` environment, to pause the run at each ✋ job.

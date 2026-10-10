@@ -29,14 +29,40 @@ In a session on a repository, say what to build:
 
 or join a feature that is already under way: "build feature 003", "re-verify feature 003".
 
-**A new repository** is set up first, on request ("set up sdlc-github in this repo") or when
-the skill finds no pipeline. It adds the two caller workflows,
-[`sdlc.yml` and `sdlc-phase.yml`](plugins/sdlc-github/skills/sdlc-github/templates), to the
-default branch and creates the `sdlc` label. You add one secret, `OLLAMA_API_KEY`, under
-Settings > Secrets and variables > Actions. Two settings are optional: "Allow GitHub Actions to
-create and approve pull requests" lets the pipeline open its pull request itself, and required
-reviewers on the `sdlc-review` environment pause the run for your approval at each review step.
-The [pipeline's README](https://github.com/ly2xxx/.github#use-it) has the details.
+On a new repository the skill sets the pipeline up first: it adds the two caller workflows,
+[`sdlc.yml` and `sdlc-phase.yml`](plugins/sdlc-github/skills/sdlc-github/templates), and the
+`sdlc` label. Then it asks you for the two settings below, which only you can change.
+
+## Set up your repository
+
+### 1. Add your Ollama API key (required)
+
+The pipeline writes the intent, spec and plan with Ollama Cloud, using your own key.
+
+1. Sign in at [ollama.com/settings/keys](https://ollama.com/settings/keys) and select
+   **Create API key**. **Settings > Manage** in the Ollama desktop app takes you there too.
+2. In your GitHub repository, open **Settings > Secrets and variables > Actions** and select
+   **New repository secret**.
+3. Name it `OLLAMA_API_KEY`, paste the key and select **Add secret**.
+
+![Create an API key on ollama.com, or from the Ollama app's Settings > Manage](docs/images/ollama-api-key.png)
+
+![The OLLAMA_API_KEY repository secret](docs/images/github-repository-secret.png)
+
+### 2. Let the pipeline open its pull request (recommended)
+
+1. Open **Settings > Actions > General** and scroll down to **Workflow permissions**.
+2. Tick **Allow GitHub Actions to create and approve pull requests** and select **Save**.
+
+Leave the permissions choice above it as it is; the pipeline's workflows ask for the access
+they need. Without this setting the run still finishes, but its last step can't open the pull
+request: it prints the title and body, and Claude opens it for you.
+
+![Allow GitHub Actions to create and approve pull requests](docs/images/github-actions-pr-permission.png)
+
+Optional: required reviewers on the `sdlc-review` environment pause the run for your approval
+at each review step; the [pipeline guide](https://github.com/ly2xxx/.github/blob/main/.github/workflows/README.md#setup-once-in-the-calling-repository)
+shows how.
 
 ## What it runs
 
