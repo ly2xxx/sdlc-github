@@ -8,6 +8,8 @@ GitHub Actions. Ollama writes the intent, spec and plan; Claude builds the appro
 phase at a time, each phase on its own branch and pull request; deterministic checks decide
 whether each phase, and the whole feature, is done. Claude never marks its own work as passed.
 
+[ly2xxx.github.io/sdlc-github/sdlc-models.html](https://ly2xxx.github.io/sdlc-github/sdlc-models.html)
+
 ## Install
 
 This repository is its own marketplace, `ly2xxx`.
@@ -69,8 +71,7 @@ shows how.
 The skill is instructions only: no hooks, MCP servers or bundled programs. Following them,
 Claude:
 
-- clones `ly2xxx/.github` at the version your workflows call, and runs its `sdlc_stage.py
-  verify` on your machine, along with each phase's Verify commands from the approved plan and
+- clones `ly2xxx/.github` at the version your workflows call, and runs its `sdlc_stage.py verify` on your machine, along with each phase's Verify commands from the approved plan and
   your test suite;
 - in a new repository, commits the two caller workflows and creates the `sdlc` label;
 - pushes `phase/<feature>/<n>` branches, opens and merges pull requests into
