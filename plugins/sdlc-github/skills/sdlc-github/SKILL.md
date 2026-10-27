@@ -1,20 +1,21 @@
 ---
 name: sdlc-github
-description: Take a feature from a one-line idea to a reviewed pull request through the SDLC Pipeline on GitHub Actions. Set up a new repository for it, join a run someone started with Run workflow, or start one with an sdlc issue; let Ollama write intent, spec and plan; build the frozen plan phase by phase (one phase branch and pull request each, Phase check, merge); hand back so the same run verifies, reviews and opens the pull request; then report it. Use for "sdlc-github" followed by an idea, "build this idea through the pipeline", "build feature 003", or to continue, re-plan or re-verify an existing sdlc feature, or "set up sdlc-github in this repo".
+description: Take a feature from a one-line idea to a reviewed pull request through the SDLC Pipeline on GitHub Actions. Set up a new repository for it, join a run someone started with Run workflow, or start one with an sdlc issue; let Ollama write intent, spec and plan, approved by the user; build the frozen plan phase by phase (one phase branch and pull request each, Phase check, merge); hand back so the pipeline verifies, reviews and opens the pull request; then report it. Use for "sdlc-github" followed by an idea, "build this idea through the pipeline", "build feature 003", or to continue, re-plan or re-verify an existing sdlc feature, or "set up sdlc-github in this repo".
 ---
 
 # SDLC GitHub
 
 You drive one feature through the SDLC Pipeline (`ly2xxx/.github`, called by this
-repo's `.github/workflows/sdlc.yml`). Ollama designs it, you build it, and
-deterministic checks judge it. You never judge your own work as passed: only a
-check's exit code does.
+repo's `.github/workflows/sdlc.yml`). Ollama designs it, the user approves the
+design, you build it, and deterministic checks judge it. You never judge your own
+work as passed: only a check's exit code does.
 
 ```text
-one run, one line
-resolve → 1 intent ✋ → 2 spec ✋ → 3 plan ✋ → 4 ⏸ hand off and wait (≤180 min)
-        → 5 verify → 5 Ollama review → 6 open the PR (feature/<f> → default branch)
-you, during step 4: phase/<f>/<n> → PR into feature/<f> → SDLC Phase Check → squash-merge
+design   resolve → 1 intent ✋ → 2 spec ✋ → 3 plan ✋ → 4 ⏸ freeze and hand off
+build    you: phase/<f>/<n> → PR into feature/<f> → SDLC Phase Check → squash-merge, per phase
+finish   the last merge → 5 verify → 5 Ollama review → 6 open the PR (feature/<f> → default branch)
+✋ = review-gate environment: the run waits for an approval in Actions
+    review-gate stop: the run ends, and the next run (start: auto) is the approval
 ```
 
 ## What you can and can't do
@@ -25,6 +26,10 @@ you, during step 4: phase/<f>/<n> → PR into feature/<f> → SDLC Phase Check �
   web, dispatch returns 403 and tag pushes are refused), start runs with issues,
   and watch them with `git ls-remote` (in a background loop) and the MCP
   `actions_*` tools.
+- **You never approve a design document yourself.** With review-gate `stop`,
+  opening a `start: auto` issue is the approval, so open one only after the user
+  has read the document and told you to carry on. With review-gate `environment`,
+  the approval is theirs in Actions.
 - The pipeline doesn't need you. Anyone can run it by hand with Run workflow.
   This skill does the Claude Code parts: starting a run on request, building,
   and seeing it through.
@@ -38,12 +43,29 @@ you, during step 4: phase/<f>/<n> → PR into feature/<f> → SDLC Phase Check �
 Do this once, when the default branch has no `.github/workflows/sdlc.yml`.
 
 1. Copy `templates/sdlc.yml` and `templates/sdlc-phase.yml` from this skill's base
-   directory into the repository's `.github/workflows/`. Change only `test-command`,
-   in both files, to the repository's whole test suite: keep `python -m pytest -q`
-   for Python or an empty repository (its first plan adds the tests), and use the
-   repository's own command, such as `npm test`, for Node.js. A Node.js repository's
-   `.gitignore` must list `node_modules/`; add it if it doesn't, or the local check in
-   step 4 counts every installed package as outside the plan.
+   directory into the repository's `.github/workflows/`, then set, in both files
+   where both have the line:
+   - `test-command`: the repository's whole test suite. Keep `python -m pytest -q`
+     for Python or an empty repository (its first plan adds the tests); use the
+     repository's own command, such as `npm test`, for Node.js. Run it on the
+     default branch first: it must pass there, or every build fails on something
+     the plan didn't touch. A workspace often has no root `test` script, so
+     chain its packages' own commands, such as
+     `pnpm --filter <package> test && pnpm --filter <other> test`.
+   - `node-version`, `python-version` or `install-command`, added under `with:`,
+     only when the defaults don't fit: a version the project pins elsewhere, or an
+     install that needs flags (for example pnpm builds the lockfile's packages
+     refuse to approve: `npm install -g pnpm@<version> && pnpm install --frozen-lockfile --ignore-scripts`).
+   - `review-gate` (sdlc.yml): `stop` when the repository is private, because its
+     environments can't have required reviewers below GitHub Enterprise; keep
+     `environment` for a public one.
+   - `allowed-paths`: globs any phase may change without the plan targeting them,
+     such as the repository's agent notes or decision log (`.agents/memory/**`).
+     Leave it empty when there are none.
+
+   A Node.js repository's `.gitignore` must list `node_modules/`; add it if it
+   doesn't, or the local check in step 4 counts every installed package as outside
+   the plan.
 2. Commit both as `sdlc: add the SDLC Pipeline` to the default branch, because Run
    workflow and the issue trigger only use workflows that are on it. Push straight to
    it when the user says so; otherwise open a pull request and ask them to merge it.
@@ -52,14 +74,17 @@ Do this once, when the default branch has no `.github/workflows/sdlc.yml`.
    `gh api repos/<owner>/<repo>/labels -f name=sdlc -f color=5319e7`).
 4. Ask the user to create an API key at https://ollama.com/settings/keys and add it as
    the `OLLAMA_API_KEY` secret (Settings → Secrets and variables → Actions → New
-   repository secret), and wait until they say it's done. Two optional settings are theirs too:
+   repository secret), and wait until they say it's done. Optional settings are theirs too:
    "Allow GitHub Actions to create and approve pull requests", without which step 6
-   prints the pull request for you to open (step 5), and required reviewers on the
-   `sdlc-review` environment, to pause the run at each ✋ job.
+   prints the pull request for you to open (step 5), and, for review-gate
+   `environment`, required reviewers on the `sdlc-review` environment, to pause the
+   run at each ✋ job.
 
 Then start the run (step 1).
 
 ## 1. Join or start the run
+
+Read `review-gate` in `.github/workflows/sdlc.yml` (missing means `environment`).
 
 **The user already started it** (with Run workflow or an issue), or names a
 feature: once `git ls-remote origin refs/tags/sdlc/<f>/approved` shows the tag,
@@ -73,15 +98,28 @@ the only thing Ollama sees.
 | :-- | :-- | :-- |
 | New feature | the idea, one line | — |
 | Revise a feature's intent | the change | `feature: <f>` |
+| Approve the last document and carry on (`stop`) | anything | `feature: <f>` and `start: auto` |
 | New plan, same intent and spec | the feature's idea | `feature: <f>` and `start: plan` |
 | Verify and open the PR again | anything | `feature: <f>` and `start: build` |
 
-Before opening it, note the existing tags: `git ls-remote origin 'refs/tags/sdlc/*/approved'`.
-Then wait in the background, for up to 15 minutes, for a new or moved
-`sdlc/<f>/approved` tag. That tag means the design is frozen and step 4 is
-waiting for you. If no tag appears, find the run (`actions_list`, workflow
-`sdlc.yml`), read the failed job's log, and report it. A `start: build` issue
-creates no tag, so go to step 5.
+Before opening it, note the existing tags and feature branches:
+`git ls-remote origin 'refs/tags/sdlc/*/approved' 'refs/heads/feature/*'`.
+
+- **review-gate `environment`:** wait in the background, for up to 15 minutes after
+  the user approves the plan, for a new or moved `sdlc/<f>/approved` tag. That tag
+  means the design is frozen and step 4 has handed it to you. Tell the user when
+  a ✋ job is waiting for them.
+- **review-gate `stop`:** each run writes one document and ends. A new idea's
+  feature name is the new `feature/<f>` branch. Wait in the background, for up
+  to 15 minutes, for the run to complete (`actions_list`, workflow `sdlc.yml`),
+  then read the document it wrote from `origin/feature/<f>` and give the user its
+  link and a short summary. They may edit it on the branch. When they say to
+  carry on, open the `start: auto` issue: it writes the next document, and the
+  one after the plan freezes the design and tags it. Repeat until the tag appears.
+
+If a run fails, or no tag or document appears, find the run (`actions_list`,
+workflow `sdlc.yml`), read the failed job's log, and report it. A `start: build`
+issue creates no tag, so go to step 5.
 
 ## 2. Read the contract
 
@@ -95,17 +133,19 @@ creates no tag, so go to step 5.
 ## 3. Set up once
 
 ```bash
-# the pipeline at the version this repo's workflows call (main, v1, ...)
+# the pipeline at the version this repo's workflows call (main, v2, ...)
 ref=$(sed -n 's#.*ly2xxx/\.github/\.github/workflows/sdlc\.yml@\([^ ]*\).*#\1#p' .github/workflows/sdlc.yml | head -1)
 test -d ../.github/actions/sdlc-stage || git clone -q --depth 1 --branch "${ref:-main}" https://github.com/ly2xxx/.github ../.github
 python3 ../.github/actions/sdlc-stage/sdlc_stage.py toolchain   # e.g. "Toolchain: Python. Install: uv pip install -e .."
 TEST=$(sed -n 's/^ *test-command: *//p' .github/workflows/sdlc.yml | head -1)
-CHECK="python3 ../.github/actions/sdlc-stage/sdlc_stage.py verify --test-command '${TEST:-python -m pytest -q}'"
+ALLOWED=$(sed -n 's/^ *allowed-paths: *//p' .github/workflows/sdlc.yml | head -1 | tr -d "\"'")
+CHECK="python3 ../.github/actions/sdlc-stage/sdlc_stage.py verify --test-command '${TEST:-python -m pytest -q}'${ALLOWED:+ --allowed-paths '$ALLOWED'}"
 ```
 
-Install the project the way `toolchain` prints, as verification will: for Python,
-`uv venv .venv && . .venv/bin/activate`, then its install command (if any) and
-`uv pip install pytest`; for Node.js, its install command. A pipeline version without
+Install the project as verification will: with the workflows' `install-command`
+when they set one, else the way `toolchain` prints. For Python,
+`uv venv .venv && . .venv/bin/activate`, then the install command (if any) and
+`uv pip install pytest`; for Node.js, the install command. A pipeline version without
 `toolchain` installs Python only: `uv pip install -e .` with a `pyproject.toml`, else
 `uv pip install -r requirements.txt`, plus pytest.
 
@@ -120,17 +160,18 @@ Install the project the way `toolchain` prints, as verification will: for Python
    and checks scope, frozen files and the contract. Iterate within the phase's
    attempt budget. Never weaken a test, skip one, or touch a frozen file to get
    to green.
-4. Append to `sdlc/features/<f>/build-log.md`. This is the one file outside the
-   targets you may write, and the pipeline reads it.
+4. Append to `sdlc/features/<f>/build-log.md`. Apart from files matching the
+   workflows' `allowed-paths`, this is the one file outside the targets you may
+   write, and the pipeline reads it.
    - `## Phase <n>: <title>`, the status and the files changed.
    - What you built, in two sentences.
    - The exact commands and their results.
    - Deviations from the plan, and why each one stands. Write "none" if there are none.
 5. Commit `sdlc(<f>): phase <n>`, push, and open a PR into `feature/<f>` titled
    `<f>: phase <n> - <title>`.
-6. Wait for **SDLC Phase Check** on it (about 30s; see `actions_list`,
-   workflow `sdlc-phase.yml`). If it's red, read the job log, fix on the same
-   branch, and push. If it's green, squash-merge the PR and start the next phase.
+6. Wait for **SDLC Phase Check** on it (about 30s plus the install; see
+   `actions_list`, workflow `sdlc-phase.yml`). If it's red, read the job log, fix on
+   the same branch, and push. If it's green, squash-merge the PR and start the next phase.
 
 In teaching or demo mode (the user asks for it, or `builder=human`), stop after
 each phase PR and let the person review it and merge it.
@@ -138,13 +179,18 @@ each phase PR and let the person review it and merge it.
 ## 5. Hand back and finish
 
 - Merging the last phase PR is the hand-back. Once `build-log.md` has a
-  `## Phase <id>:` section for every phase, step 4 notices within about 30s, and
-  the same run goes on to verify, review and open the PR.
-- Watch the run until it completes (`actions_get` → `get_workflow_run`), then find
-  the PR: `list_pull_requests`, with head `feature/<f>`.
+  `## Phase <id>:` section for every phase, the pipeline goes on to verify,
+  review and open the PR: a new **SDLC Pipeline** run that the merge starts (the
+  template's `pull_request` trigger, with `build-wait-minutes: 0`), or, where
+  `build-wait-minutes` is above 0, the run still waiting at step 4.
+- Watch that run until it completes (`actions_list`, workflow `sdlc.yml`, newest
+  first; then `actions_get` → `get_workflow_run`), then find the PR:
+  `list_pull_requests`, with head `feature/<f>`.
 - **Verify failed:** read its log, fix the problem on `phase/<f>/<n>-fix` through a
-  PR as in step 4, then open a `start: build` issue.
-- **Step 4 timed out** (it says so in its summary): open a `start: build` issue.
+  PR as in step 4. Merging it starts the build run again; with no merge trigger,
+  open a `start: build` issue.
+- **No build run started**, or step 4 timed out (it says so in its summary): open a
+  `start: build` issue.
 - **Step 6 couldn't open the PR** (the setting is off): its log prints the
   title and body between `----- pull request` markers. Open the PR yourself with
   exactly that title and body.
@@ -156,8 +202,8 @@ each phase PR and let the person review it and merge it.
 
 - The approved plan is the contract. Build it, and never rewrite it. Only the
   pipeline changes it: an issue, then Ollama, then a new tag.
-- Change only the current phase's targets, plus `build-log.md`. Leave frozen
-  files alone.
+- Change only the current phase's targets, plus `build-log.md` and files matching
+  `allowed-paths`. Leave frozen files alone.
 - **A bug that is outside the plan.** A Verify block may fail because of
   something already broken on the default branch, outside the targets. Prove it
   by reproducing it on the default branch. Fix it in a separate PR against the
@@ -177,7 +223,14 @@ each phase PR and let the person review it and merge it.
 - **Test-order bugs.** A test can pass alone and hang when collected after
   another module. Import side effects are the usual cause, such as locust's
   gevent monkey-patching. Try the reverse order to tell.
+- **Workspaces.** A test runner installed in one package isn't on the path at the
+  root, so `npx vitest` there fails or fetches another copy. Run a package's tests
+  the way the plan's "How verification runs" names, such as
+  `pnpm --filter <package> exec vitest run <file>`, with the path relative to the package.
 - **Numbering.** A new feature's number is one more than the highest in
-  `sdlc/features/` or on any `feature/*` branch. Read the real name from the tag.
+  `sdlc/features/` or on any `feature/*` branch. Read the real name from the tag,
+  or with review-gate `stop`, from the new `feature/*` branch.
 - **Stale local tags.** Run `git fetch --tags` before reading from
   `sdlc/<f>/approved`. The tag moves when the plan is redone.
+- **Pipeline versions.** At `@main`, the pipeline's own actions are `@main` too.
+  The `v1` tag predates Node.js support, `review-gate` and `allowed-paths`.

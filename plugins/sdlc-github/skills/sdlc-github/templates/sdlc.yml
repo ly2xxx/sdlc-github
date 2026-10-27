@@ -1,22 +1,24 @@
 name: SDLC Pipeline
 
-# One run, one line: idea -> intent.md -> spec.md -> plan.md (Ollama Cloud) -> build
-# (Claude Code or a person; step 4 waits for it) -> verify -> Ollama review -> pull
-# request. The pipeline is the reusable workflow in ly2xxx/.github:
+# idea -> intent.md -> spec.md -> plan.md (Ollama Cloud) -> build (Claude Code or a
+# person, one phase pull request at a time) -> verify -> Ollama review -> pull request.
+# The pipeline is the reusable workflow in ly2xxx/.github:
 # https://github.com/ly2xxx/.github/blob/main/.github/workflows/README.md
 #
 # Start it: Run workflow with an idea, or open an issue labelled "sdlc" (title = idea;
-# "feature: <name>" in the body revises that feature, and with "start: build" runs only
-# steps 5-6).
+# "feature: <name>" in the body revises that feature; with "start: auto" it carries on
+# from where the feature is, and with "start: build" runs only steps 5-6). Merging the
+# last phase's pull request into feature/<name> starts steps 5-6 by itself.
 #
 # One-time setup (Settings):
 #   Secrets and variables -> Actions: OLLAMA_API_KEY (secret). Optional variables:
 #     OLLAMA_MODEL (empty uses the pipeline's default) and OLLAMA_THINK.
 #   Optional: Actions -> General -> "Allow GitHub Actions to create and approve pull
 #     requests", or an SDLC_PR_TOKEN secret, so step 6 opens the pull request itself.
-#   Optional: Environments -> sdlc-review -> Required reviewers, to pause at each review job.
+#   Optional: Environments -> sdlc-review -> Required reviewers, to pause at each review
+#     job. A private repository has them only on GitHub Enterprise: use review-gate stop.
 
-run-name: "SDLC · ${{ inputs.feature || inputs.idea || github.event.issue.title }} · from ${{ inputs.start || 'issue' }} · ${{ inputs.builder || 'claude' }}"
+run-name: "SDLC · ${{ inputs.feature || inputs.idea || github.event.issue.title || github.head_ref }} · from ${{ inputs.start || (github.event_name == 'pull_request' && 'merge') || 'issue' }} · ${{ inputs.builder || 'claude' }}"
 
 on:
   workflow_dispatch:
@@ -25,10 +27,10 @@ on:
         description: "Idea (one line). Starts a new feature, or revises the feature named below."
         required: false
       feature:
-        description: "Existing feature folder under sdlc/features. Alone, once built, it runs verify and opens the PR."
+        description: "Existing feature folder under sdlc/features. Alone, it carries on from where the feature is."
         required: false
       start:
-        description: "Where to start. auto = intent with an idea, else the first missing document, else the build run."
+        description: "Where to start. auto = intent with an idea, else the next document, else the build run."
         type: choice
         options: [auto, intent, spec, plan, build]
         default: auto
@@ -39,6 +41,11 @@ on:
         default: claude
   issues:
     types: [labeled]
+  # A merged phase pull request hands the build back: once build-log.md logs every
+  # phase, this run verifies the feature and opens its pull request.
+  pull_request:
+    types: [closed]
+    branches: ["feature/**"]
 
 permissions:
   contents: write
@@ -46,7 +53,9 @@ permissions:
 
 jobs:
   sdlc:
-    if: github.event_name == 'workflow_dispatch' || github.event.label.name == 'sdlc'
+    if: >-
+      github.event_name == 'workflow_dispatch' || github.event.label.name == 'sdlc' ||
+      (github.event_name == 'pull_request' && github.event.pull_request.merged && startsWith(github.head_ref, 'phase/'))
     uses: ly2xxx/.github/.github/workflows/sdlc.yml@main
     with:
       idea: ${{ inputs.idea || github.event.issue.title || '' }}
@@ -55,9 +64,20 @@ jobs:
       builder: ${{ inputs.builder }}
       model: ${{ vars.OLLAMA_MODEL }}
       think: ${{ vars.OLLAMA_THINK }}
+      # environment: the review jobs wait for sdlc-review's required reviewers.
+      # stop: each run writes one document and ends; running again for the feature
+      # (start auto, or an issue with "start: auto") approves it. For a private repository.
+      review-gate: environment
       # The whole test suite; it must fail when it finds no tests. npm test for Node.js.
+      # node-version, python-version and install-command go here too when the defaults
+      # don't fit; give sdlc-phase.yml the same.
       test-command: python -m pytest -q
-      build-wait-minutes: 180
+      # Globs any phase may change without the plan targeting them, such as an agent's
+      # notes: ".agents/memory/**, docs/decisions.md". The same in sdlc-phase.yml.
+      allowed-paths: ""
+      # 0 ends the run at the hand-off, and the merged last phase starts steps 5-6 (the
+      # pull_request trigger above), so no job holds a runner while the feature is built.
+      build-wait-minutes: 0
     secrets:
       OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
       SDLC_PR_TOKEN: ${{ secrets.SDLC_PR_TOKEN }}

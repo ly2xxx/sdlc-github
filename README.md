@@ -33,7 +33,9 @@ or join a feature that is already under way: "build feature 003", "re-verify fea
 
 On a new repository the skill sets the pipeline up first: it adds the two caller workflows,
 [`sdlc.yml` and `sdlc-phase.yml`](plugins/sdlc-github/skills/sdlc-github/templates), and the
-`sdlc` label. Then it asks you for the two settings below, which only you can change.
+`sdlc` label, and fits them to the repository: its test command and toolchain, and how you
+approve the design (step 3 below). Then it asks you for the settings below, which only you can
+change.
 
 ## Set up your repository
 
@@ -62,9 +64,16 @@ request: it prints the title and body, and Claude opens it for you.
 
 ![Allow GitHub Actions to create and approve pull requests](docs/images/github-actions-pr-permission.png)
 
-Optional: required reviewers on the `sdlc-review` environment pause the run for your approval
-at each review step; the [pipeline guide](https://github.com/ly2xxx/.github/blob/main/.github/workflows/README.md#setup-once-in-the-calling-repository)
-shows how.
+### 3. Choose how you approve the design
+
+You approve the intent, the spec and the plan before anything is built.
+
+- **Public repository:** add required reviewers to the `sdlc-review` environment, and the run
+  pauses for your approval at each review step; the [pipeline guide](https://github.com/ly2xxx/.github/blob/main/.github/workflows/README.md#setup-once-in-the-calling-repository)
+  shows how.
+- **Private repository:** environments there can't have required reviewers below GitHub
+  Enterprise, so the skill sets `review-gate: stop`. Each run writes one document and ends;
+  Claude shows it to you, and starts the next run only when you say to carry on.
 
 ## What it runs
 

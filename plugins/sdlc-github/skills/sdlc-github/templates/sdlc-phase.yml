@@ -15,5 +15,6 @@ jobs:
   phase:
     uses: ly2xxx/.github/.github/workflows/sdlc-phase.yml@main
     with:
-      # The same test suite as sdlc.yml.
+      # The same test suite, setup inputs and allowed paths as sdlc.yml.
       test-command: python -m pytest -q
+      allowed-paths: ""
