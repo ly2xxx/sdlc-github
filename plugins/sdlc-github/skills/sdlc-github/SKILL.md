@@ -1,6 +1,6 @@
 ---
 name: sdlc-github
-description: Take a feature from a one-line idea to a reviewed pull request through the SDLC Pipeline on GitHub Actions. Set up a new repository for it, join a run someone started with Run workflow, or start one with an sdlc issue; let Ollama write intent, spec and plan; build the frozen plan phase by phase (one phase branch and pull request each, Phase check, merge); hand back so the same run verifies, reviews and opens the pull request; then report it. Use for "sdlc-github" followed by an idea, "build this idea through the pipeline", "build feature 003", or to continue, re-plan or re-verify an existing sdlc feature, or "set up sdlc-github in this repo".
+description: Take a feature from a one-line idea to a reviewed pull request through the SDLC Pipeline on GitHub Actions. Join a run someone started with Run workflow, or start one with an sdlc issue; let Ollama write intent, spec and plan; build the frozen plan phase by phase (one phase branch and pull request each, Phase check, merge); hand back so the same run verifies, reviews and opens the pull request; then report it. Use for "sdlc-github" followed by an idea, "build this idea through the pipeline", "build feature 003", or to continue, re-plan or re-verify an existing sdlc feature. To set a repository up for the pipeline, use sdlc-github-setup.
 ---
 
 # SDLC GitHub
@@ -31,33 +31,18 @@ you, during step 4: phase/<f>/<n> → PR into feature/<f> → SDLC Phase Check �
 - The repo needs the two caller workflows, `.github/workflows/sdlc.yml` and
   `sdlc-phase.yml`, on its default branch, an `sdlc` label and an
   `OLLAMA_API_KEY` secret. If the workflows are missing, set the repository up
-  (step 0). Only the user can add the secret.
+  first (step 0).
 
 ## 0. Set up a new repository
 
-Do this once, when the default branch has no `.github/workflows/sdlc.yml`.
+When the default branch has no `.github/workflows/sdlc.yml`, the repository isn't
+set up yet. Run the `sdlc-github-setup` skill, which adds the workflows, the label
+and the settings, and walks the user through the `OLLAMA_API_KEY` secret. If that
+skill isn't installed, tell the user to add it
+(`npx skills add ly2xxx/sdlc-github --skill sdlc-github-setup`, or the whole plugin)
+and stop.
 
-1. Copy `templates/sdlc.yml` and `templates/sdlc-phase.yml` from this skill's base
-   directory into the repository's `.github/workflows/`. Change only `test-command`,
-   in both files, to the repository's whole test suite: keep `python -m pytest -q`
-   for Python or an empty repository (its first plan adds the tests), and use the
-   repository's own command, such as `npm test`, for Node.js. A Node.js repository's
-   `.gitignore` must list `node_modules/`; add it if it doesn't, or the local check in
-   step 4 counts every installed package as outside the plan.
-2. Commit both as `sdlc: add the SDLC Pipeline` to the default branch, because Run
-   workflow and the issue trigger only use workflows that are on it. Push straight to
-   it when the user says so; otherwise open a pull request and ask them to merge it.
-   An empty repository gets them as its first commit.
-3. Create the `sdlc` label if it's missing (GitHub MCP tools, or
-   `gh api repos/<owner>/<repo>/labels -f name=sdlc -f color=5319e7`).
-4. Ask the user to create an API key at https://ollama.com/settings/keys and add it as
-   the `OLLAMA_API_KEY` secret (Settings → Secrets and variables → Actions → New
-   repository secret), and wait until they say it's done. Two optional settings are theirs too:
-   "Allow GitHub Actions to create and approve pull requests", without which step 6
-   prints the pull request for you to open (step 5), and required reviewers on the
-   `sdlc-review` environment, to pause the run at each ✋ job.
-
-Then start the run (step 1).
+When it reports the repository ready, start the run (step 1).
 
 ## 1. Join or start the run
 
