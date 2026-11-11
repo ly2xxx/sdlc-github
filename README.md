@@ -2,9 +2,9 @@
 
 Automated software development with AI through GitHub Actions.
 
-A Claude plugin with one skill, `sdlc-github`, that takes a feature from a one-line idea to a
-reviewed pull request through the [SDLC Pipeline](https://github.com/ly2xxx/.github) on
-GitHub Actions. Ollama writes the intent, spec and plan; Claude builds the approved plan one
+A Claude plugin with two skills. `sdlc-github-setup` makes a repository ready for the
+pipeline, and `sdlc-github` takes a feature from a one-line idea to a reviewed pull request
+through the [SDLC Pipeline](https://github.com/ly2xxx/.github) on GitHub Actions. Ollama writes the intent, spec and plan; Claude builds the approved plan one
 phase at a time, each phase on its own branch and pull request; deterministic checks decide
 whether each phase, and the whole feature, is done. Claude never marks its own work as passed.
 
@@ -31,11 +31,25 @@ In a session on a repository, say what to build:
 
 or join a feature that is already under way: "build feature 003", "re-verify feature 003".
 
-On a new repository the skill sets the pipeline up first: it adds the two caller workflows,
-[`sdlc.yml` and `sdlc-phase.yml`](plugins/sdlc-github/skills/sdlc-github/templates), and the
-`sdlc` label. Then it asks you for the two settings below, which only you can change.
-
 ## Set up your repository
+
+In a session on the repository, say:
+
+> set up sdlc-github in this repo
+
+The `sdlc-github-setup` skill checks what the repository already has and adds what is
+missing. It pushes the two caller workflows,
+[`sdlc.yml` and `sdlc-phase.yml`](plugins/sdlc-github/skills/sdlc-github/templates), to the
+default branch and creates the `sdlc` label. It then walks you through step 1 below, which
+only you can do. Where Claude has the `gh` CLI and admin access to the repository, it offers
+to do step 2 for you. Run it again at any time to check the setup. Asking `sdlc-github` to
+build on a repository that isn't set up runs it first.
+
+To add only the setup skill to a project, without the plugin:
+
+```bash
+npx skills add ly2xxx/sdlc-github --skill sdlc-github-setup
+```
 
 ### 1. Add your Ollama API key (required)
 
@@ -68,12 +82,13 @@ shows how.
 
 ## What it runs
 
-The skill is instructions only: no hooks, MCP servers or bundled programs. Following them,
+Both skills are instructions only: no hooks, MCP servers or bundled programs. Following them,
 Claude:
 
 - clones `ly2xxx/.github` at the version your workflows call, and runs its `sdlc_stage.py verify` on your machine, along with each phase's Verify commands from the approved plan and
   your test suite;
-- in a new repository, commits the two caller workflows and creates the `sdlc` label;
+- in a new repository, pushes the two caller workflows to the default branch, creates the
+  `sdlc` label and, if you accept, turns on the two optional settings;
 - pushes `phase/<feature>/<n>` branches, opens and merges pull requests into
   `feature/<feature>`, and opens `sdlc` issues to start pipeline runs;
 - reads workflow runs and their logs.
