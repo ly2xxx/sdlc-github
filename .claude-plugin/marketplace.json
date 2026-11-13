@@ -6,7 +6,7 @@
     {
       "name": "sdlc-github",
       "source": "./plugins/sdlc-github",
-      "description": "Drive a feature from a one-line idea to a reviewed pull request through the SDLC Pipeline on GitHub Actions."
+      "description": "Drive a feature from a one-line idea to a reviewed pull request through the SDLC Pipeline on GitHub Actions, and a large feature piece by piece from a reviewed design document."
     }
   ]
 }

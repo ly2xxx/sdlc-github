@@ -2,9 +2,10 @@
 
 Automated software development with AI through GitHub Actions.
 
-A Claude plugin with two skills. `sdlc-github-setup` makes a repository ready for the
-pipeline, and `sdlc-github` takes a feature from a one-line idea to a reviewed pull request
-through the [SDLC Pipeline](https://github.com/ly2xxx/.github) on GitHub Actions. Ollama writes the intent, spec and plan; Claude builds the approved plan one
+A Claude plugin with three skills. `sdlc-github-setup` makes a repository ready for the
+pipeline, `sdlc-github` takes a feature from a one-line idea to a reviewed pull request
+through the [SDLC Pipeline](https://github.com/ly2xxx/.github) on GitHub Actions, and
+`sdlc-github-epic` breaks a feature too big for one run into pieces and builds them in order. Ollama writes the intent, spec and plan; Claude builds the approved plan one
 phase at a time, each phase on its own branch and pull request; deterministic checks decide
 whether each phase, and the whole feature, is done. Claude never marks its own work as passed.
 
@@ -30,6 +31,29 @@ In a session on a repository, say what to build:
 > use sdlc-github to build a version endpoint on the FastAPI app
 
 or join a feature that is already under way: "build feature 003", "re-verify feature 003".
+
+### A large feature
+
+One pipeline run plans at most four phases. For anything bigger, give the requirement, or a
+file that holds it, to the epic skill:
+
+> use sdlc-github-epic to build the team tasks feature in docs/requirements.md
+
+1. Claude reads the requirement and the code, asks you about the open decisions, and writes a
+   design document, `docs/<epic>.md`, with shared rules, facts from the code, and a section for
+   each piece.
+2. **You review and merge the design.** Every later run follows it word for word.
+3. Claude builds one piece at a time through `sdlc-github`. Each run's issue points at its
+   sections of the document (`design: docs/<epic>.md#piece-2`). **You merge each piece's pull
+   request** before the next piece starts.
+4. After each merge Claude records what was built in the document and in
+   `sdlc/epics/<epic>.md`, so a later session can carry on from where this one stopped.
+5. At the end you get a checklist of what the checks couldn't cover, such as schema changes
+   to apply.
+
+You can also point a single run at a design section yourself: put a
+`design: docs/<file>.md#<heading>` line in the `sdlc` issue's body, or in the **design** box
+of Run workflow.
 
 ## Set up your repository
 
@@ -82,7 +106,7 @@ shows how.
 
 ## What it runs
 
-Both skills are instructions only: no hooks, MCP servers or bundled programs. Following them,
+The skills are instructions only: no hooks, MCP servers or bundled programs. Following them,
 Claude:
 
 - clones `ly2xxx/.github` at the version your workflows call, and runs its `sdlc_stage.py verify` on your machine, along with each phase's Verify commands from the approved plan and
@@ -91,6 +115,8 @@ Claude:
   `sdlc` label and, if you accept, turns on the two optional settings;
 - pushes `phase/<feature>/<n>` branches, opens and merges pull requests into
   `feature/<feature>`, and opens `sdlc` issues to start pipeline runs;
+- for an epic, opens pull requests for the design document and its status file, and
+  updates them after each piece;
 - reads workflow runs and their logs.
 
 It sends nothing anywhere else. The pipeline itself calls Ollama Cloud from GitHub Actions with

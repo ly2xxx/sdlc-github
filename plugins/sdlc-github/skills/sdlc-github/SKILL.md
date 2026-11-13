@@ -1,6 +1,6 @@
 ---
 name: sdlc-github
-description: Take a feature from a one-line idea to a reviewed pull request through the SDLC Pipeline on GitHub Actions. Join a run someone started with Run workflow, or start one with an sdlc issue; let Ollama write intent, spec and plan; build the frozen plan phase by phase (one phase branch and pull request each, Phase check, merge); hand back so the same run verifies, reviews and opens the pull request; then report it. Use for "sdlc-github" followed by an idea, "build this idea through the pipeline", "build feature 003", or to continue, re-plan or re-verify an existing sdlc feature. To set a repository up for the pipeline, use sdlc-github-setup.
+description: Take a feature from a one-line idea to a reviewed pull request through the SDLC Pipeline on GitHub Actions. Join a run someone started with Run workflow, or start one with an sdlc issue; let Ollama write intent, spec and plan; build the frozen plan phase by phase (one phase branch and pull request each, Phase check, merge); hand back so the same run verifies, reviews and opens the pull request; then report it. Use for "sdlc-github" followed by an idea, "build this idea through the pipeline", "build feature 003", or to continue, re-plan or re-verify an existing sdlc feature. To set a repository up for the pipeline, use sdlc-github-setup. For a requirement too big for one run (more than about four phases), use sdlc-github-epic.
 ---
 
 # SDLC GitHub
@@ -51,15 +51,23 @@ feature: once `git ls-remote origin refs/tags/sdlc/<f>/approved` shows the tag,
 go to step 2. If the tag isn't there yet, wait for it as described below. If
 the run was started with start `build`, go to step 5.
 
-**Otherwise, start it yourself:** open an issue labelled `sdlc`. The title is
-the only thing Ollama sees.
+**Otherwise, start it yourself:** open an issue labelled `sdlc`. Ollama sees the
+title, the files the title names, and the design sections the body points at.
 
 | Intent | Title | Body lines |
 | :-- | :-- | :-- |
 | New feature | the idea, one line | — |
+| New feature from a design document | a short name for it | one `design: docs/<file>.md#<heading-anchor>` line per section |
 | Revise a feature's intent | the change | `feature: <f>` |
 | New plan, same intent and spec | the feature's idea | `feature: <f>` and `start: plan` |
 | Verify and open the PR again | anything | `feature: <f>` and `start: build` |
+
+A `design:` line makes the intent, spec and plan stages quote that section of a
+document on the default branch word for word. The anchor is the heading's link
+anchor or the start of it (`#piece-5` finds "## Piece 5: ..."); the run fails at
+once if it matches no heading, or more than one. Use it whenever the idea
+doesn't fit one line. If the requirement needs more than about four phases,
+stop and use the `sdlc-github-epic` skill, which splits it into pieces first.
 
 Before opening it, note the existing tags: `git ls-remote origin 'refs/tags/sdlc/*/approved'`.
 Then wait in the background, for up to 15 minutes, for a new or moved
@@ -101,9 +109,12 @@ Install the project the way `toolchain` prints, as verification will: for Python
 2. Change only the phase's targets, and write the tests its Definition of done
    names. When the plan gives exact file content, use it exactly.
 3. Check your uncommitted work: `eval "$CHECK --feature <f> --phase <n>"`. This runs
-   the Verify blocks of phases 1..n from the approved plan and the whole suite,
-   and checks scope, frozen files and the contract. Iterate within the phase's
-   attempt budget. Never weaken a test, skip one, or touch a frozen file to get
+   the type-check and phase n's Verify block from the approved plan, and checks
+   scope, frozen files and the contract. The Phase check on the pull request
+   runs the same. Before the last phase's pull request, add `--full` once: it
+   also runs the whole suite and the Verify blocks of the earlier phases, which
+   is what step 5 will run. (A pipeline version before design references runs
+   all of that on every check.) Iterate within the phase's attempt budget. Never weaken a test, skip one, or touch a frozen file to get
    to green.
 4. Append to `sdlc/features/<f>/build-log.md`. This is the one file outside the
    targets you may write, and the pipeline reads it.
@@ -159,6 +170,11 @@ each phase PR and let the person review it and merge it.
 
 - **A Verify block hangs.** Output piped through `grep` is buffered, so you won't
   see which command hung. Run each command alone under `timeout 120`.
+- **Building ahead.** While a Phase check runs you may build phase n+1 on
+  `phase/<f>/<n+1>`, branched from phase n. After phase n is squash-merged,
+  `git merge -X ours origin/feature/<f>` on the next branch before its pull
+  request, and check that `git diff --stat origin/feature/<f>` shows only that
+  phase's files.
 - **Test-order bugs.** A test can pass alone and hang when collected after
   another module. Import side effects are the usual cause, such as locust's
   gevent monkey-patching. Try the reverse order to tell.
