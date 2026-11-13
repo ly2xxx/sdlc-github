@@ -27,6 +27,9 @@ on:
       feature:
         description: "Existing feature folder under sdlc/features. Alone, once built, it runs verify and opens the PR."
         required: false
+      design:
+        description: "Design sections to build from, e.g. docs/x.md#piece-2 (space-separated). Quoted word for word to Ollama."
+        required: false
       start:
         description: "Where to start. auto = intent with an idea, else the first missing document, else the build run."
         type: choice
@@ -51,6 +54,7 @@ jobs:
     with:
       idea: ${{ inputs.idea || github.event.issue.title || '' }}
       feature: ${{ inputs.feature }}
+      design: ${{ inputs.design }}
       start: ${{ inputs.start }}
       builder: ${{ inputs.builder }}
       model: ${{ vars.OLLAMA_MODEL }}
