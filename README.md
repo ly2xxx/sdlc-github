@@ -47,7 +47,7 @@ file that holds it, to the epic skill:
    sections of the document (`design: docs/<epic>.md#piece-2`). **You merge each piece's pull
    request** before the next piece starts.
 4. After each merge Claude records what was built in the document and in
-   `sdlc/epics/<epic>.md`, so a later session can carry on from where this one stopped.
+   `sdlc/epics/<NNN>-<epic>.md`, so a later session can carry on from where this one stopped.
 5. At the end you get a checklist of what the checks couldn't cover, such as schema changes
    to apply.
 

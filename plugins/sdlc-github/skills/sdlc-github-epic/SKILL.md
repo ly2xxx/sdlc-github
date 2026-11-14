@@ -20,8 +20,10 @@ Two things hold the pieces together, and both are files in the repository:
 - **The design document**, `docs/<epic>.md`. Ollama reads the sections a piece
   names word for word, so the document is the real specification. The issue
   title is only a label.
-- **The status file**, `sdlc/epics/<epic>.md`. It records which piece is which
-  feature and pull request, so a new session can carry on.
+- **The status file**, `sdlc/epics/<NNN>-<epic>.md`. It records which piece is
+  which feature and pull request, so a new session can carry on. Like feature
+  folders, everything under `sdlc/` is numbered, so the order of the work is
+  clear when auditing.
 
 ## Rules
 
@@ -98,8 +100,9 @@ Keep the whole document under about 12,000 characters, and each piece section
 under about 2,500. A run quotes the rules, the facts and one piece, and the
 model's prompt is limited.
 
-Write `sdlc/epics/<epic>.md` from `templates/status.md`, with every piece
-`planned`.
+Write `sdlc/epics/<NNN>-<epic>.md` from `templates/status.md`, with every piece
+`planned`. `<NNN>` is one more than the highest number in `sdlc/epics/` on the
+default branch and on any open pull request, three digits, starting at `001`.
 
 Check the anchors you will use resolve, before anyone reviews:
 
@@ -200,7 +203,7 @@ When the last piece is merged:
 
 A new session, or a session after a long break, starts from the files:
 
-1. Read `sdlc/epics/<epic>.md` and `docs/<epic>.md` on the default branch.
+1. Read `sdlc/epics/<NNN>-<epic>.md` and `docs/<epic>.md` on the default branch.
 2. For the first piece that isn't `merged`: if it has a feature, look at its
    state (`git ls-remote origin 'refs/heads/feature/<f>' 'refs/heads/phase/<f>/*' 'refs/tags/sdlc/<f>/approved'`,
    its `build-log.md`, its open pull requests) and continue `sdlc-github` from
