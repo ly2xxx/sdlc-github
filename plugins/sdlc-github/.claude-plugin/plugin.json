@@ -1,6 +1,6 @@
 {
   "name": "sdlc-github",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "displayName": "SDLC GitHub",
   "description": "Set a repository up for the SDLC Pipeline, then take a feature from a one-line idea to a reviewed pull request through the SDLC Pipeline on GitHub Actions: Ollama designs it, Claude builds it phase by phase, and deterministic checks decide when it is done. A feature too big for one run is broken into a reviewed design document and built piece by piece.",
   "author": { "name": "ly2xxx", "url": "https://github.com/ly2xxx" },
