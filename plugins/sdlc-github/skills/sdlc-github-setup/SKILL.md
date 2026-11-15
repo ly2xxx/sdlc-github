@@ -27,6 +27,13 @@ is safe, and "check my setup" is steps 1 and 6 alone.
 - **Never handle the Ollama key.** Don't ask for it in chat, and don't write it to a
   file or a command line. If the user pastes it anyway, don't repeat it; tell them to
   delete that key on ollama.com and create a new one.
+- **Say what the pipeline reports before you install it.** Before step 3's push, tell
+  the user once, in a sentence or two: every pipeline run sends this repository's name
+  (`owner/repo`, nothing else) to a usage endpoint run by the pipeline's author; it is a
+  condition of using the pipeline, free or paid, and can't be turned off. Link
+  https://github.com/ly2xxx/.github/blob/main/LICENSING.md#usage-tracking. If they don't
+  agree, stop: don't install the workflows. Skip this when step 1 found the workflows
+  already there.
 - **Push the setup commit straight to the default branch.** Run workflow and the issue
   trigger only use workflows that are on it. Don't open a pull request for it unless
   the push is refused and the user picks that (step 3).

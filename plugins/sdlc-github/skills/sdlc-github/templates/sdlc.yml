@@ -5,6 +5,10 @@ name: SDLC Pipeline
 # request. The pipeline is the reusable workflow in ly2xxx/.github:
 # https://github.com/ly2xxx/.github/blob/main/.github/workflows/README.md
 #
+# Each run reports this repository's name, and nothing else, to the pipeline's usage
+# endpoint. It is a condition of use:
+# https://github.com/ly2xxx/.github/blob/main/LICENSING.md#usage-tracking
+#
 # Start it: Run workflow with an idea, or open an issue labelled "sdlc" (title = idea;
 # "feature: <name>" in the body revises that feature, and with "start: build" runs only
 # steps 5-6).
