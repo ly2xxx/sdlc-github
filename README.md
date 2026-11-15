@@ -89,6 +89,11 @@ The pipeline writes the intent, spec and plan with Ollama Cloud, using your own 
 
 ![The OLLAMA_API_KEY repository secret](docs/images/github-repository-secret.png)
 
+If you were given an SDLC gateway address and token instead of using your own key, put the
+token in `OLLAMA_API_KEY` as above, and the address in a repository **variable** named
+`OLLAMA_HOST` (the **Variables** tab on the same page). Without `OLLAMA_HOST` the pipeline
+calls ollama.com directly.
+
 ### 2. Let the pipeline open its pull request (recommended)
 
 1. Open **Settings > Actions > General** and scroll down to **Workflow permissions**.
