@@ -177,6 +177,12 @@ Give them both links, complete, and then wait for them to say it's done:
 For several repositories under one organization, an organization secret set once
 covers them all: `https://github.com/organizations/<org>/settings/secrets/actions`.
 
+**Through an SDLC gateway instead.** When the user was given a gateway address and
+token, the token goes in `OLLAMA_API_KEY` as above, and the address in an Actions
+**variable** (not a secret) named `OLLAMA_HOST`, at
+`https://github.com/<owner>/<repo>/settings/variables/actions/new`. Leave `OLLAMA_HOST`
+unset to call https://ollama.com with their own key, the default.
+
 While you wait, finish anything left from steps 3 and 4.
 
 ## 6. Confirm and hand over

@@ -11,7 +11,9 @@ name: SDLC Pipeline
 #
 # One-time setup (Settings):
 #   Secrets and variables -> Actions: OLLAMA_API_KEY (secret). Optional variables:
-#     OLLAMA_MODEL (empty uses the pipeline's default) and OLLAMA_THINK.
+#     OLLAMA_MODEL (empty uses the pipeline's default), OLLAMA_THINK, and OLLAMA_HOST
+#     (empty calls https://ollama.com with your own OLLAMA_API_KEY; to go through an
+#     SDLC gateway, set its address and put the gateway token in OLLAMA_API_KEY).
 #   Optional: Actions -> General -> "Allow GitHub Actions to create and approve pull
 #     requests", or an SDLC_PR_TOKEN secret, so step 6 opens the pull request itself.
 #   Optional: Environments -> sdlc-review -> Required reviewers, to pause at each review job.
@@ -59,6 +61,7 @@ jobs:
       builder: ${{ inputs.builder }}
       model: ${{ vars.OLLAMA_MODEL }}
       think: ${{ vars.OLLAMA_THINK }}
+      ollama-host: ${{ vars.OLLAMA_HOST }}
       # The whole test suite; it must fail when it finds no tests. npm test for Node.js.
       test-command: python -m pytest -q
       build-wait-minutes: 180
