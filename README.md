@@ -125,9 +125,14 @@ Claude:
 - reads workflow runs and their logs.
 
 It sends nothing anywhere else. The pipeline itself calls Ollama Cloud from GitHub Actions with
-your repository's key.
+your repository's key, and each run reports your repository's name (`owner/repo`, nothing
+else) to a usage endpoint. That report is a condition of use and can't be turned off: see
+[Usage tracking](LICENSING.md#usage-tracking).
 
 ## License
 
 [PolyForm Noncommercial 1.0.0](LICENSE): free for personal and noncommercial use. Business use
 needs a commercial license; see [LICENSING.md](LICENSING.md).
+
+By running the pipeline you consent to its [usage tracking](LICENSING.md#usage-tracking): every
+run reports the name of the repository it runs in.
