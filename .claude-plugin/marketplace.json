@@ -1,12 +1,15 @@
 {
   "name": "ly2xxx",
   "description": "Claude plugins by ly2xxx",
-  "owner": { "name": "ly2xxx", "url": "https://github.com/ly2xxx" },
+  "owner": {
+    "name": "ly2xxx",
+    "url": "https://github.com/ly2xxx"
+  },
   "plugins": [
     {
       "name": "sdlc-github",
       "source": "./plugins/sdlc-github",
-      "description": "Drive a feature from a one-line idea to a reviewed pull request through the SDLC Pipeline on GitHub Actions, and a large feature piece by piece from a reviewed design document."
+      "description": "Drive a feature from a one-line idea to a reviewed pull request through the SDLC Pipeline on GitHub Actions, and a large feature piece by piece from a reviewed design document. Tracks Dependabot alerts in one issue and fixes them through the pipeline."
     }
   ]
 }

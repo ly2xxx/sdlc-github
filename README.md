@@ -2,10 +2,12 @@
 
 Automated software development with AI through GitHub Actions.
 
-A Claude plugin with three skills. `sdlc-github-setup` makes a repository ready for the
+A Claude plugin with five skills. `sdlc-github-setup` makes a repository ready for the
 pipeline, `sdlc-github` takes a feature from a one-line idea to a reviewed pull request
 through the [SDLC Pipeline](https://github.com/ly2xxx/.github) on GitHub Actions, and
-`sdlc-github-epic` breaks a feature too big for one run into pieces and builds them in order. Ollama writes the intent, spec and plan; Claude builds the approved plan one
+`sdlc-github-epic` breaks a feature too big for one run into pieces and builds them in order.
+`sdlc-dependabot-setup` and `sdlc-dependabot-remediate` track a repository's Dependabot alerts
+in one issue and fix them through the pipeline. Ollama writes the intent, spec and plan; Claude builds the approved plan one
 phase at a time, each phase on its own branch and pull request; deterministic checks decide
 whether each phase, and the whole feature, is done. Claude never marks its own work as passed.
 
@@ -54,6 +56,20 @@ file that holds it, to the epic skill:
 You can also point a single run at a design section yourself: put a
 `design: docs/<file>.md#<heading>` line in the `sdlc` issue's body, or in the **design** box
 of Run workflow.
+
+### Dependabot alerts
+
+> use sdlc-dependabot-setup on this repository
+
+adds the [Dependabot monitor](https://github.com/ly2xxx/.github/blob/main/actions/dependabot-alerts/README.md),
+which keeps one issue, labelled `dependabot`, listing the open alerts by package with the version
+that clears them all. It needs a fine-grained token with **Dependabot alerts: Read-only** in the
+`DEPENDABOT_ALERTS_TOKEN` secret; without it, it scans with Trivy. Then:
+
+> use sdlc-dependabot-remediate to fix the Dependabot alerts
+
+reads that issue, removes unused packages, groups the upgrades into pieces by risk (tests first),
+and builds them with the epic skill. You review the design and each piece as for any epic.
 
 ## Set up your repository
 
@@ -122,11 +138,13 @@ Claude:
   `feature/<feature>`, and opens `sdlc` issues to start pipeline runs;
 - for an epic, opens pull requests for the design document and its status file, and
   updates them after each piece;
+- for Dependabot alerts, pushes the monitor workflow, comments `/refresh` on its issue, and
+  reads the issue;
 - reads workflow runs and their logs.
 
 It sends nothing anywhere else. The pipeline itself calls Ollama Cloud from GitHub Actions with
 your repository's key, and each run reports your repository's name (`owner/repo`, nothing
-else) to a usage endpoint. That report is a condition of use and can't be turned off: see
+else) to a usage endpoint, and so does each Dependabot monitor run. That report is a condition of use and can't be turned off: see
 [Usage tracking](LICENSING.md#usage-tracking).
 
 ## License
