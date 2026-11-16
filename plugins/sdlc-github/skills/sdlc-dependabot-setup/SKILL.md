@@ -63,18 +63,25 @@ Change only:
 - the `paths:` list, to the repository's manifests (keep it short; add `**/go.sum`,
   `**/Gemfile.lock` and so on only when they exist).
 
-## 3. The install command
+## 3. Python version and install command
 
-Remediation runs install the project the pipeline's way. Read the manifests and set
-`install-command` in **both** `sdlc.yml` and `sdlc-phase.yml` when the default install
-won't do. One case is known:
+Remediation runs install the project the pipeline's way, on Python 3.12 unless told
+otherwise, into a `.venv` made by `uv` (it has no `pip`: use `uv pip`). Vulnerable
+projects are usually old ones, so check both, and set them in **both** `sdlc.yml` and
+`sdlc-phase.yml`, under `with:` next to `test-command`:
+
+- **`python-version`**: when the pins don't install on 3.12. Check with
+  `uv pip compile --python-version 3.12 requirements.txt -o /dev/null`; on a
+  "requires CPython" failure, use the version in `.python-version`, `.devcontainer`
+  or `pyproject.toml`'s `requires-python` that resolves.
+- **`install-command`**, when the default install won't do. One case is known:
 
 | The manifests have | `install-command` |
 | :-- | :-- |
-| `torch` in `requirements.txt` | `pip install --extra-index-url https://download.pytorch.org/whl/cpu -r requirements.txt` (CPU-only torch; the default pulls gigabytes of CUDA libraries) |
+| `torch` in `requirements.txt` | `uv pip install --index-strategy unsafe-best-match --extra-index-url https://download.pytorch.org/whl/cpu -r requirements.txt` (CPU-only torch; the default pulls gigabytes of CUDA libraries) |
 
-Add it under `with:` next to `test-command`, with a one-line comment saying why. When
-nothing calls for it, leave the workflows alone.
+Give each setting a one-line comment saying why. When nothing calls for them, leave the
+workflows alone.
 
 ## 4. Push to the default branch
 
