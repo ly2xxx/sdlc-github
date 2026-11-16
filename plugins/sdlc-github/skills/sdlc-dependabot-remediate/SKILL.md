@@ -146,6 +146,11 @@ checklist:
 - **Transitive dependencies.** An alert on a package the manifest doesn't list comes
   from a lockfile or another package's pin. Upgrade the parent, or pin the child
   explicitly with a comment saying which parent needs it.
+- **Pinning makes alerts visible.** Dependabot reads only the manifest, so a package
+  pinned for the first time can bring alerts that were there, unseen, all along. Pin a
+  previously unpinned package to its newest release, never an arbitrary older one (an
+  older pin adds alerts the unpinned install didn't have), and expect the monitor's
+  count to rise after a piece that pins transitive packages.
 - **Keep the manifest's bytes.** A byte-order mark or CRLF line endings must survive
   every edit, or the diff shows every line changed. Say so in Facts.
 - **Heavy wheels.** A remediation run installs the project on every check. If the
