@@ -31,6 +31,9 @@ Read from the code and the tracking issue on <date>. Use these exactly.
   through a package being removed).>
 - <For each package a piece upgrades: the files that import it, the names they use,
   and the exact call shapes the upgrade may change.>
+- <Pins a fresh install needs (packages that moved on since the manifest was written),
+  each with the newest version that works and why.>
+- <The manifest's encoding: byte-order mark, line endings.>
 - <Test fixtures and sample files to use, with paths.>
 
 ## Done

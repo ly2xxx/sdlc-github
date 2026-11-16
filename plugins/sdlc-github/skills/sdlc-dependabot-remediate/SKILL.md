@@ -78,6 +78,15 @@ piece 1 adds a smoke suite (imports, each screen or command, the core functions)
 anything is upgraded. The pipeline judges by tests: without them an upgrade "passes"
 whatever it breaks.
 
+**Install it fresh before you design.** Old stacks often no longer install into a working
+app: their unpinned dependencies have moved on (a new `pyarrow` needs NumPy 2; a new
+`transformers` needs a newer torch; `huggingface-hub` dropped an API an old package
+imports; Werkzeug 3 broke Flask 2.0). In a clean environment on the pipeline's Python,
+install the manifest as the pipeline does and import every module and screen. For each
+failure, find the newest version of the moved package that works, and put those pins in
+piece 1 and in Facts. Check each pin's CVEs too (the pipeline's security scan sees them,
+step 4 of "After each piece").
+
 **Ask once**, in one message, with your recommendation for each: the no-fix packages,
 removals of packages that *are* used, and anything that changes behaviour a user would
 notice. Then also confirm who merges each piece's pull request, if the user hasn't said.
@@ -111,6 +120,15 @@ later. Then, as part of `sdlc-github-epic` step 7:
 New alerts can appear mid-epic. Add them to the piece of their family if it hasn't
 started, or to a new last piece, with the user's agreement.
 
+**The security scan blocks a piece that adds a vulnerable pin.** The pipeline's step 5
+fails only on findings the branch adds, and a newly explicit pin of a vulnerable version
+counts, even if that version was installed before through another package. Don't work
+around it: tell the user which pins, which IDs and which later piece upgrades them, and
+ask. If they accept, add the IDs to `.trivyignore` on the default branch in a small pull
+request, each group commented with the piece that removes it; add "delete these entries"
+to those pieces in the design; merge the default branch into `feature/<f>`; and open a
+`start: build` issue for the feature.
+
 ## 5. Close
 
 When the last piece is merged, do `sdlc-github-epic` step 4, and add to the closing
@@ -118,7 +136,8 @@ checklist:
 
 - the issue's state: closed by the monitor ("No open alerts"), or the alerts still open,
   each with its decision (no fix and accepted, dismissed, out of scope);
-- the token's expiry, if the user gave one, since the monitor falls back to Trivy after it.
+- the token's expiry, if the user gave one, since the monitor falls back to Trivy after it;
+- `.trivyignore`: every entry the epic added should be gone; list any left, with why.
 
 ## Gotchas
 
@@ -127,6 +146,8 @@ checklist:
 - **Transitive dependencies.** An alert on a package the manifest doesn't list comes
   from a lockfile or another package's pin. Upgrade the parent, or pin the child
   explicitly with a comment saying which parent needs it.
+- **Keep the manifest's bytes.** A byte-order mark or CRLF line endings must survive
+  every edit, or the diff shows every line changed. Say so in Facts.
 - **Heavy wheels.** A remediation run installs the project on every check. If the
   install is slow or huge (CUDA torch), set `install-command` in both pipeline
   workflows (see `sdlc-dependabot-setup` step 3) before piece 1.
