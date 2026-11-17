@@ -13,6 +13,7 @@ name: Dependabot monitor
 # One-time setup: a fine-grained token limited to this repository, with "Dependabot
 # alerts: Read-only", saved as the Actions secret DEPENDABOT_ALERTS_TOKEN. Without it the
 # monitor scans the manifests with Trivy instead.
+# DEPENDABOT_ALERTS_TOKEN expires: unknown (set the date when the token is created)
 #
 # Runs weekly, on Run workflow, after a push that changes a manifest (waiting 10 minutes
 # so Dependabot has rescanned), and on a "/refresh" comment on the tracking issue by

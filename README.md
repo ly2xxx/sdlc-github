@@ -69,7 +69,10 @@ that clears them all. It needs a fine-grained token with **Dependabot alerts: Re
 > use sdlc-dependabot-remediate to fix the Dependabot alerts
 
 reads that issue, removes unused packages, groups the upgrades into pieces by risk (tests first),
-and builds them with the epic skill. You review the design and each piece as for any epic.
+and builds them with the epic skill. Each piece is first made to work in a scratch install, and its
+design is written from what passed, so the pipeline's plan has nothing to guess. You review the
+design and each piece as for any epic. Its helper scripts (`manifest.py`, `newest_working.py`,
+`pin_advisories.py`, `alert_facts.py`) are standard-library Python beside the skill.
 
 ## Set up your repository
 
@@ -146,6 +149,12 @@ It sends nothing anywhere else. The pipeline itself calls Ollama Cloud from GitH
 your repository's key, and each run reports your repository's name (`owner/repo`, nothing
 else) to a usage endpoint, and so does each Dependabot monitor run. That report is a condition of use and can't be turned off: see
 [Usage tracking](LICENSING.md#usage-tracking).
+
+## Develop
+
+```bash
+python -m pytest -q        # the skills' scripts and structure; CI runs it on every pull request
+```
 
 ## License
 

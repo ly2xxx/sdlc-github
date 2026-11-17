@@ -1,6 +1,6 @@
 ---
 name: sdlc-dependabot-setup
-description: Set a GitHub repository up so its Dependabot alerts are tracked in one issue and can be fixed through the SDLC Pipeline. Makes sure the pipeline is installed (running sdlc-github-setup when it isn't), adds the Dependabot monitor workflow, sets the pipeline's install command when the project needs one, and walks the user through the DEPENDABOT_ALERTS_TOKEN secret, then runs the monitor once and reads back its issue. Safe to run again; it only adds what is missing. Use for "sdlc-dependabot-setup", "monitor my Dependabot alerts", "set up Dependabot remediation", "track the security alerts on <repo>", or when sdlc-dependabot-remediate finds no monitor workflow.
+description: Set a GitHub repository up so its Dependabot alerts are tracked in one issue and can be fixed through the SDLC Pipeline. Makes sure the pipeline is installed (running sdlc-github-setup when it isn't), adds the Dependabot monitor workflow, sets the pipeline's install command when the project needs one, and walks the user through the DEPENDABOT_ALERTS_TOKEN secret, then runs the monitor once, reads back its issue, and reports how ready the project is for remediation (fresh install, tests, sandbox limits). Safe to run again; it only adds what is missing. Use for "sdlc-dependabot-setup", "monitor my Dependabot alerts", "set up Dependabot remediation", "track the security alerts on <repo>", or when sdlc-dependabot-remediate finds no monitor workflow.
 ---
 
 # SDLC Dependabot setup
@@ -18,6 +18,7 @@ A repository is ready when it has:
 | 3 | The `DEPENDABOT_ALERTS_TOKEN` Actions secret | **the user** |
 | 4 | Dependabot alerts turned on (Settings > Advanced Security) | the user, if off |
 | 5 | An open issue labelled `dependabot` from the monitor | the first run |
+| 6 | A readiness report: fresh install, tests, sandbox limits | you |
 
 ## Rules
 
@@ -50,7 +51,7 @@ A repository is ready when it has:
 5. **The issue.** An open issue labelled `dependabot` whose body starts with
    `<!-- dependabot-monitor -->` (`list_issues` with the label).
 
-Show the table with a state for each line. If all are done, say so and hand over (step 6).
+Show the table with a state for each line. If items 1 to 5 are done, do step 6 and hand over (step 7).
 
 ## 2. Prepare the monitor workflow
 
@@ -111,7 +112,34 @@ Skip this when step 1 found the secret. Give the user these steps, then wait:
 It must be an Actions secret: a Dependabot secret of the same name isn't passed to
 workflows.
 
-## 6. First run and hand-over
+Ask for the token's **expiry date** in the same message (a date is not a secret). Write it
+into the `# DEPENDABOT_ALERTS_TOKEN expires:` line of `.github/workflows/dependabot-monitor.yml`
+on the default branch, in the setup commit or a small follow-up. The remediate skill's
+closing checklist reads it there, and so does anyone wondering why the issue fell back to
+Trivy.
+
+## 6. Readiness report
+
+Remediation goes faster when its surprises are found here. In a scratch copy of the
+default branch, on the pipeline's Python (`python-version` in the callers):
+
+1. **Fresh install.** Install the manifest as the pipeline does (`install-command`, else
+   `uv pip install -r requirements.txt`) and import every module the app runs (and, for
+   a Streamlit app, run each page under `streamlit.testing.v1.AppTest`). Old stacks often
+   don't start any more: unpinned dependencies have moved on. Report each failure with
+   its error; `sdlc-dependabot-remediate` pins them in its first piece.
+2. **Manifest bytes.** `python3 ../sdlc-dependabot-remediate/scripts/manifest.py check
+   <manifest>`: byte-order mark, line endings, unpinned lines.
+3. **Tests.** `python -m pytest --collect-only -q` (or the `test-command`). Report the
+   count. None means remediation starts with a piece that writes a smoke suite.
+4. **Sandbox limits.** Check this session can reach every index the install command
+   uses (`curl -sI https://download.pytorch.org/whl/cpu/` and the like). Where it can't,
+   local checks install a different build (PyPI's torch); say so, since only the
+   pipeline then checks the real build.
+
+Report the four in a few lines each. Nothing here changes the repository.
+
+## 7. First run and hand-over
 
 Start the monitor once: Run workflow (`gh workflow run dependabot-monitor.yml`, or the
 `actions_run_trigger` tool). Where you can't start runs, push the setup commit (the
@@ -124,6 +152,7 @@ issue back and report:
 - the source line: **Dependabot alerts API**, or Trivy with the reason, which means the
   token is missing or can't read alerts (go back to step 5);
 - the number of open alerts and packages, and the five worst rows of the table;
+- the readiness report (step 6) and the token's expiry;
 - what is still the user's, with links.
 
 Then offer to fix the alerts with `sdlc-dependabot-remediate`.
