@@ -18,6 +18,9 @@ name: SDLC Pipeline
 #     OLLAMA_MODEL (empty uses the pipeline's default), OLLAMA_THINK, and OLLAMA_HOST
 #     (empty calls https://ollama.com with your own OLLAMA_API_KEY; to go through an
 #     SDLC gateway, set its address and put the gateway token in OLLAMA_API_KEY).
+#   Optional, through a gateway only: LLM_API_KEY (secret), your own key for another
+#     model provider, with OLLAMA_MODEL naming it, e.g. openai/<model>. It is never
+#     sent to ollama.com.
 #   Optional: Actions -> General -> "Allow GitHub Actions to create and approve pull
 #     requests", or an SDLC_PR_TOKEN secret, so step 6 opens the pull request itself.
 #   Optional: Environments -> sdlc-review -> Required reviewers, to pause at each review job.
@@ -71,4 +74,5 @@ jobs:
       build-wait-minutes: 180
     secrets:
       OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
+      LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
       SDLC_PR_TOKEN: ${{ secrets.SDLC_PR_TOKEN }}

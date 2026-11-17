@@ -190,6 +190,12 @@ token, the token goes in `OLLAMA_API_KEY` as above, and the address in an Action
 `https://github.com/<owner>/<repo>/settings/variables/actions/new`. Leave `OLLAMA_HOST`
 unset to call https://ollama.com with their own key, the default.
 
+**Their own model provider, through a gateway.** If they want to use another
+provider's models (OpenAI, Anthropic, ...) with their own key, that key goes in a
+second secret, `LLM_API_KEY`, and the model in the `OLLAMA_MODEL` variable with the
+provider in front, such as `openai/<model>`. They set the secret themselves, as with
+the Ollama key; never ask for it. Without `OLLAMA_HOST` the key is never sent.
+
 While you wait, finish anything left from steps 3 and 4.
 
 ## 6. Confirm and hand over

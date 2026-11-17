@@ -113,6 +113,11 @@ token in `OLLAMA_API_KEY` as above, and the address in a repository **variable**
 `OLLAMA_HOST` (the **Variables** tab on the same page). Without `OLLAMA_HOST` the pipeline
 calls ollama.com directly.
 
+Through a gateway you can also use another model provider with your own key: put that key in
+an `LLM_API_KEY` secret and name the model with its provider in the `OLLAMA_MODEL` variable,
+for example `openai/<model>` or `anthropic/<model>`. The gateway token stays in
+`OLLAMA_API_KEY`. The provider key is only ever sent to the gateway, never to ollama.com.
+
 ### 2. Let the pipeline open its pull request (recommended)
 
 1. Open **Settings > Actions > General** and scroll down to **Workflow permissions**.
